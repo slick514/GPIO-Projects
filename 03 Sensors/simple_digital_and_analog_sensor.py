@@ -17,6 +17,10 @@ import sys
 # Declaration of pins (BCM-numbering) that we will use for the GPIO inputs and outputs
 digital_detection_input__pin = 27
 digital_detection_output_pin = 22
+
+# A lot of these sensors have analog outputs as well.  I'm not sure how often they are encountered, and the Pi
+# inputs are rather strictly digital, but there are some work-arounds that I would like to try out, where we
+# might be able to use a resistor/capacitor setup to rig an analog input... we'll see
 analog_detection_input__pin = 5
 analog_detection_output_pin = 6
 
