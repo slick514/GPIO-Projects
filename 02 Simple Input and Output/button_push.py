@@ -6,13 +6,16 @@ import time
 import sys
 
 
+# The following has nothing to do with this particular program, and is just here for easy Raspberry Pi reference;
 # Possible GPIO Pins (Broadcom SOC Channel Numbering) for the Raspberry Pi:
 # 4, 17, 27, 22, 5, 6, 13, 19, 26, 18, 23, 24, 25, 12, 16, 20, 21
 
 # Here we're just setting some collections and parameters that we will be using
 input_detection_pin = 4
 output_pin = 17
-wakeup_period_s = 60 # we'll wake up every minute...
+
+# Wake up every minute
+wakeup_period_s = 60
 
 
 # Print out the name of the script that is running...
@@ -45,8 +48,6 @@ def initialize_GPIO():
 
     # Output pin initialization
     GPIO.setup(output_pin, GPIO.OUT, initial=0)
-
-    time.sleep(1) # Wait 1 second, in case the GPIO take any kind of time to initialize
 
 
 def declare_GPIO_functionality():
