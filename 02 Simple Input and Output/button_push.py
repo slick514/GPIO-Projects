@@ -1,55 +1,74 @@
 #!/usr/bin/env python3
 
-# Here we are going to import some libraries, so that we can re-use other people's code
+# The first line will make your IDE complain, unless you are somehow running directly on a Raspberry Pi
 import RPi.GPIO as GPIO
 import time
 import sys
 
-# Possible IO Pins: 4, 17, 27, 22, 5, 6, 13, 19, 26, 18, 23, 24, 25, 12, 16, 20, 21
+
+# Possible GPIO Pins (Broadcom SOC Channel Numbering) for the Raspberry Pi:
+# 4, 17, 27, 22, 5, 6, 13, 19, 26, 18, 23, 24, 25, 12, 16, 20, 21
 
 # Here we're just setting some collections and parameters that we will be using
-# input_pins = (4, 27, 22, 5, 6, 13, 19, 26, 18, 23, 24, 25, 12, 16, 20, 21)
-switch_input_detection_pin = 4
-switch_output_pin = 17
+input_detection_pin = 4
+output_pin = 17
+wakeup_period_s = 60 # we'll wake up every minute...
+
 
 # This is the functionality that will be carried out when the switch is opened and closed
-def handle_switch_change_action(pin_number_that_changed):
+def cb_on_input_change(changed_pin):
 
-    is_latch_closed = GPIO.input(pin_number_that_changed)
-    GPIO.output(switch_output_pin, not is_latch_closed)
+    is_latch_closed = GPIO.input(changed_pin)
+
+    # If uncommented, the following line will set the output as the opposite of the input
+    # GPIO.output(output_pin, not is_latch_closed)
+
+    # If uncommented, the following line will set the output as the same as the input
+    GPIO.output(output_pin, is_latch_closed)
+
 
 # Initialization of the GPIO pins
 def setup_GPIO():
 
-    # Here we're just doing pin setup, and declaring MOST of the pins as INPUTS
+    # We are going to refer to the pins by the Broadcom SOC channel numbering.
     GPIO.setmode(GPIO.BCM)
-    GPIO.setup(switch_input_detection_pin, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
 
-    # This is where we connect the callback to the state-change event
-    GPIO.add_event_detect(switch_input_detection_pin,
+    # Input pin set-up
+    # I have not yet figured out how to get the pull-up/pull-down to work in software, but I try here anyway
+    GPIO.setup(input_detection_pin, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
+
+    # Declaring the name of the function that will be called when the state of the input changes;
+    # This will detect both rising-edge and falling-edge events (GPIO.BOTH)
+    GPIO.add_event_detect(input_detection_pin,
                           GPIO.BOTH,
-                          callback=handle_switch_change_action)
+                          callback=cb_on_input_change)
 
-    # Here we declare one pin as an output.
-    GPIO.setup(switch_output_pin, GPIO.OUT, initial=0)
-    handle_switch_change_action(switch_input_detection_pin)
+    # Output pin setup
+    GPIO.setup(output_pin, GPIO.OUT, initial=0)
 
-# The first method that is called, which calls everything else...
+    # Calling the callback function once, to initialize the input/output relationship prior to an input event
+    cb_on_input_change(input_detection_pin)
+
+
+# The first method that will be called
 def main():
     try:
-        print("{} running".format(sys.argv[0]))
+        filename = sys.argv[0]
+
+        # Print out the name of the script that is running...
+        print("{} is running".format(filename))
+
         setup_GPIO()
-        time.sleep(1)
-        print("now fully set up and looping")
-        # Here we are just going to keep the program running. We can declare the sleep-time
-        # to be as long as we want; the callback function isn't dependant on this being "awake"
+
+        # This loop just keeps the program running. The callback functionality isn't dependant on things being "awake"
         while True:
-            time.sleep(20)
+            time.sleep(wakeup_period_s)
     except KeyboardInterrupt:
         pass
     finally:
         # A bit of house-keeping when we shut-down to make sure we're not bad citizens
         GPIO.cleanup()
+
 
 # This is where "Main" is actually called...
 if __name__ == "__main__":
