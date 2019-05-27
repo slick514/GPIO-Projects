@@ -15,6 +15,12 @@ output_pin = 17
 wakeup_period_s = 60 # we'll wake up every minute...
 
 
+# Print out the name of the script that is running...
+def print_filename():
+    filename = sys.argv[0]
+    print("{} is running".format(filename))
+
+
 # This is the functionality that will be carried out when the switch is opened and closed
 def cb_on_input_change(changed_pin):
 
@@ -28,7 +34,7 @@ def cb_on_input_change(changed_pin):
 
 
 # Initialization of the GPIO pins
-def setup_GPIO():
+def initialize_GPIO():
 
     # We are going to refer to the pins by the Broadcom SOC channel numbering.
     GPIO.setmode(GPIO.BCM)
@@ -37,28 +43,29 @@ def setup_GPIO():
     # I have not yet figured out how to get the pull-up/pull-down to work in software, but I try here anyway
     GPIO.setup(input_detection_pin, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
 
+    # Output pin initialization
+    GPIO.setup(output_pin, GPIO.OUT, initial=0)
+
+    time.sleep(1) # Wait 1 second, in case the GPIO take any kind of time to initialize
+
+
+def declare_GPIO_functionality():
+
     # Declaring the name of the function that will be called when the state of the input changes;
     # This will detect both rising-edge and falling-edge events (GPIO.BOTH)
     GPIO.add_event_detect(input_detection_pin,
                           GPIO.BOTH,
                           callback=cb_on_input_change)
 
-    # Output pin setup
-    GPIO.setup(output_pin, GPIO.OUT, initial=0)
-
     # Calling the callback function once, to initialize the input/output relationship prior to an input event
     cb_on_input_change(input_detection_pin)
-
 
 # The first method that will be called
 def main():
     try:
-        filename = sys.argv[0]
-
-        # Print out the name of the script that is running...
-        print("{} is running".format(filename))
-
-        setup_GPIO()
+        print_filename()
+        initialize_GPIO()
+        declare_GPIO_functionality()
 
         # This loop just keeps the program running. The callback functionality isn't dependant on things being "awake"
         while True:
